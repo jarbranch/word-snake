@@ -3,83 +3,97 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>Word Snake</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Lexend:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
-/* VOICE: playful, nostalgic, tactile — an old candybar phone in your hand
-   IDEA: the phone itself; the page is the handset, the game is its LCD
-   PICTURE: the pea-green LCD arena with a lettered snake, d-pad keys below
-   COLOUR and TYPE: LCD green + pixel ink, slate-blue plastic case; Pixelify Sans
-   LAYOUT: one centred handset: brand, word slots, arena, keys; fits a phone screen */
-:root{color-scheme:light dark;--bg:light-dark(#e3e6d8,#10130c);--ink:light-dark(#2a3020,#cfd5bf);--lcd:#b4c368;--lcd2:#a6b55c;--px:#263015;--px2:#56632b;--case:#2c3a57;--case2:#19223a;--key:#45567a}
+/* VOICE: bright, friendly, modern casual game
+   IDEA: a board of candy-coloured letter tiles; a mint snake spells as it eats
+   PICTURE: the dark game board with colourful tiles is the hero, target word above it
+   COLOUR and TYPE: warm light page (deep navy at night), navy board, coral/orange/yellow/sky/violet/pink tiles, mint snake;
+                    Lexend for UI, Atkinson Hyperlegible for letters (built so similar letters are easy to tell apart)
+   LAYOUT: one column: title + stats, target word, board, touch pad (touch screens only) */
+:root{color-scheme:light dark;--bg:light-dark(#fff4e6,#0c1120);--ink:light-dark(#1d1b2f,#eef1fb);--muted:light-dark(#77708a,#98a2bd);--card:light-dark(#ffffff,#182037);--line:light-dark(#f1dfcb,#2a3456);--board:#141b30;--mint:#20c997;--tileInk:#1d1b2f}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
-html,body{height:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Pixelify Sans",ui-monospace,monospace;overflow-x:clip;display:grid;place-items:center;padding:12px 10px 20px;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
-.phone{width:min(100%,430px);background:linear-gradient(160deg,#36476a,var(--case) 40%,var(--case2));border-radius:34px 34px 46px 46px;padding:14px 14px 20px;box-shadow:0 24px 40px -18px rgba(0,0,0,.55),inset 0 2px 0 rgba(255,255,255,.18),inset 0 -4px 0 rgba(0,0,0,.25)}
-.brand{display:flex;justify-content:space-between;align-items:center;color:#cdd6ea;padding:0 10px 8px;font-weight:600}
-.brand b{font-size:20px;font-weight:700}.brand span{font-size:13px;opacity:.7}
-.bezel{background:#0f1524;border-radius:14px;padding:7px;box-shadow:inset 0 2px 6px rgba(0,0,0,.6)}
-.screen{background:radial-gradient(120% 90% at 30% 20%,#c1cf76,var(--lcd) 55%,var(--lcd2));border-radius:8px;padding:8px 8px 10px;color:var(--px);box-shadow:inset 0 4px 14px rgba(0,0,0,.22)}
-.hud{display:flex;justify-content:space-between;font-size:15px;padding:0 4px;font-variant-numeric:tabular-nums}
-.hud b{font-weight:700}
-.slots{display:flex;gap:6px;justify-content:center;margin:6px 0 8px}
-.slot{width:38px;height:42px;border:2px dashed var(--px2);border-radius:5px;display:grid;place-items:center;font-size:26px;font-weight:700;line-height:1}
-.slot.on{background:var(--px);color:var(--lcd);border-style:solid;border-color:var(--px)}
-.slot.next{border-style:solid;border-color:var(--px);animation:blink 1s steps(2) infinite}
-@keyframes blink{50%{border-color:transparent}}
-.board{position:relative;touch-action:none;display:grid;place-items:center}
-canvas{display:block;image-rendering:pixelated;border-radius:3px}
-.ov{position:absolute;inset:0;display:grid;place-items:center;background:rgba(180,195,104,.9);border-radius:3px;padding:10px;overflow:auto}
-.ov.hide{display:none}.ov.clear{background:transparent;pointer-events:none}
-.card{text-align:center;max-width:320px;color:var(--px)}
-.card h2{font-size:26px;line-height:1.05;margin:0 0 8px;text-wrap:balance}
-.card p{margin:0 0 10px;font-size:16px}
-.card ul{text-align:left;margin:0 0 12px;padding-left:20px;font-size:15px}.card li{margin-bottom:3px}
-.big{font-size:44px;font-weight:700;line-height:1;margin:4px 0 10px}
-.tag{display:inline-block;background:var(--px);color:var(--lcd);padding:4px 10px;border-radius:6px;font-size:22px;font-weight:700}
-.go{font:700 19px "Pixelify Sans",monospace;background:var(--px);color:var(--lcd);border:0;border-radius:9px;padding:10px 26px;min-height:46px;cursor:pointer}
-.go:focus-visible,.pad button:focus-visible{outline:3px solid #f2f6c8;outline-offset:2px}
-.found{color:#cdd6ea;font-size:14px;text-align:center;min-height:21px;margin:10px 6px 0;overflow-wrap:anywhere}
-.pad{display:grid;grid-template-columns:repeat(3,62px);grid-template-rows:repeat(3,50px);gap:6px;justify-content:center;margin-top:10px}
-.pad button{background:linear-gradient(#56688f,var(--key));border:0;border-radius:14px;color:#e2e8f5;display:grid;place-items:center;box-shadow:0 4px 0 #121a2c,inset 0 1px 0 rgba(255,255,255,.25);cursor:pointer;touch-action:manipulation}
-.pad button:active{transform:translateY(3px);box-shadow:0 1px 0 #121a2c}
-.pad svg{width:22px;height:22px;fill:currentColor}
-.u{grid-area:1/2}.l{grid-area:2/1}.c{grid-area:2/2;border-radius:50%!important}.r{grid-area:2/3}.d{grid-area:3/2}
-.help{font-size:13px;text-align:center;margin-top:12px;opacity:.75}
-@media(max-height:720px){.pad{grid-template-rows:repeat(3,42px)}.slot{height:36px;width:34px;font-size:22px}}
-@media(prefers-reduced-motion:reduce){.slot.next{animation:none}}
+html,body{min-height:100%}
+body{margin:0;color:var(--ink);font:16px/1.45 Lexend,system-ui,sans-serif;overflow-x:clip;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;
+  background:radial-gradient(55% 35% at 0% 0%,light-dark(#ffd6a5,#2b1f4d),transparent 70%),radial-gradient(50% 35% at 100% 8%,light-dark(#bdf0f5,#0f3550),transparent 70%),var(--bg);background-attachment:fixed}
+main{width:min(100%,560px);margin:0 auto;padding:12px 12px 16px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+h1{font-size:26px;line-height:1.05;margin:0;font-weight:800;display:flex;align-items:center;gap:8px}
+.logo{display:inline-flex;gap:3px}.logo i{width:12px;height:12px;border-radius:4px;display:block}
+.stats{display:flex;gap:6px;align-items:center}
+.pill{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:13px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.pill b{color:var(--ink);font-weight:600}
+.icon{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);display:grid;place-items:center;cursor:pointer}
+.icon svg{width:18px;height:18px;fill:currentColor}
+.target{margin-top:10px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:8px 12px 10px;text-align:center;box-shadow:0 10px 24px -18px rgba(60,30,0,.5)}
+.label{font-size:13px;color:var(--muted);margin-bottom:6px}
+.label.off{color:#e8590c;font-weight:600}
+.slots{display:flex;gap:6px;justify-content:center}
+.slot{width:42px;height:46px;border-radius:11px;border:2px dashed var(--line);display:grid;place-items:center;font:700 27px/1 "Atkinson Hyperlegible",Verdana,sans-serif;color:var(--muted)}
+.slot.ghost{opacity:.55}
+.slot.next{border-style:solid;border-color:var(--mint);opacity:1}
+.slot.on{border:0;color:var(--tileInk);box-shadow:inset 0 -3px 0 rgba(0,0,0,.18);animation:pop .25s ease-out}
+@keyframes pop{from{transform:scale(.6)}}
+.board{position:relative;margin:12px auto 0;border-radius:16px;background:var(--board);box-shadow:0 22px 40px -22px rgba(10,15,40,.7);overflow:hidden}
+canvas{display:block}
+.ov{position:absolute;inset:0;display:grid;place-items:center;padding:14px;background:rgba(12,17,34,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.ov.hide{display:none}.ov.clear{background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none;pointer-events:none}
+.card{background:var(--card);color:var(--ink);border-radius:20px;padding:18px 18px 16px;max-width:310px;width:100%;text-align:center;box-shadow:0 20px 40px -12px rgba(0,0,0,.45)}
+.card h2{font-size:24px;line-height:1.1;margin:0 0 8px;font-weight:800;text-wrap:balance}
+.card p{margin:0 0 10px;font-size:15px;color:var(--muted)}.card p b{color:var(--ink)}
+.card ul{text-align:left;margin:0 0 14px;padding-left:18px;font-size:15px}.card li{margin-bottom:4px}
+.chips{display:flex;gap:5px;justify-content:center;margin:4px 0 12px}
+.chips span{width:38px;height:42px;border-radius:10px;display:grid;place-items:center;font:700 25px/1 "Atkinson Hyperlegible",Verdana,sans-serif;color:var(--tileInk);box-shadow:inset 0 -3px 0 rgba(0,0,0,.18)}
+.big{font-size:44px;font-weight:800;line-height:1;margin:2px 0 8px}
+.toast{background:var(--card);color:var(--ink);border-radius:16px;padding:10px 16px;text-align:center;box-shadow:0 14px 30px -10px rgba(0,0,0,.5)}
+.toast strong{display:block;font-size:20px}
+.go{font:600 18px Lexend,sans-serif;background:var(--mint);color:#06281f;border:0;border-radius:14px;padding:11px 28px;min-height:46px;cursor:pointer}
+.go:focus-visible,.icon:focus-visible,.pad button:focus-visible{outline:3px solid #4dabf7;outline-offset:2px}
+.found{font-size:13px;color:var(--muted);text-align:center;margin-top:8px;min-height:19px;overflow-wrap:anywhere}
+.pad{display:grid;grid-template-columns:repeat(3,58px);grid-template-rows:repeat(3,46px);gap:6px;justify-content:center;margin-top:8px}
+.pad button{background:var(--card);border:1px solid var(--line);border-radius:14px;color:var(--ink);display:grid;place-items:center;cursor:pointer;touch-action:manipulation;box-shadow:0 3px 0 var(--line)}
+.pad button:active{transform:translateY(2px);box-shadow:none}
+.pad svg{width:20px;height:20px;fill:currentColor}
+.u{grid-area:1/2}.l{grid-area:2/1}.r{grid-area:2/3}.d{grid-area:3/2}
+.help{font-size:13px;color:var(--muted);text-align:center;margin:10px 0 0}
+@media(hover:hover) and (pointer:fine){.pad{display:none}}
+@media(max-width:380px){.slot{width:36px;height:42px;font-size:24px}.pill{padding:4px 8px}h1{font-size:22px}}
+@media(prefers-reduced-motion:reduce){.slot.on{animation:none}}
 </style></head><body>
 <main>
-<div class="phone">
-  <div class="brand"><b>Word Snake</b><span id="lenTag">5-letter words</span></div>
-  <div class="bezel"><div class="screen">
-    <div class="hud"><span>Lvl <b id="lvl">1</b></span><span>Score <b id="score">0</b></span><span>Best <b id="best">0</b></span></div>
-    <div class="slots" id="slots"></div>
-    <div class="board" id="board">
-      <canvas id="cv" width="300" height="300" aria-label="Game arena"></canvas>
-      <div class="ov" id="ov"><div class="card" id="card"></div></div>
+  <div class="top">
+    <h1><span class="logo"><i style="background:#ff8787"></i><i style="background:#ffd43b"></i><i style="background:#74c0fc"></i></span>Word Snake</h1>
+    <div class="stats">
+      <span class="pill">Lvl <b id="lvl">1</b></span><span class="pill">Score <b id="score">0</b></span><span class="pill">Best <b id="best">0</b></span>
+      <button class="icon" id="pauseBtn" aria-label="Pause"><svg viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg></button>
     </div>
-  </div></div>
+  </div>
+  <section class="target"><div class="label" id="label">Make this word</div><div class="slots" id="slots"></div></section>
+  <div class="board" id="board">
+    <canvas id="cv" aria-label="Game board"></canvas>
+    <div class="ov" id="ov"><div class="card" id="card"></div></div>
+  </div>
   <div class="found" id="found"></div>
   <div class="pad" id="pad">
     <button class="u" data-d="0,-1" aria-label="Up"><svg viewBox="0 0 24 24"><path d="M12 5l8 12H4z"/></svg></button>
     <button class="l" data-d="-1,0" aria-label="Left"><svg viewBox="0 0 24 24"><path d="M5 12l12-8v16z"/></svg></button>
-    <button class="c" id="pauseBtn" aria-label="Pause"><svg viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg></button>
     <button class="r" data-d="1,0" aria-label="Right"><svg viewBox="0 0 24 24"><path d="M19 12L7 20V4z"/></svg></button>
     <button class="d" data-d="0,1" aria-label="Down"><svg viewBox="0 0 24 24"><path d="M12 19L4 7h16z"/></svg></button>
   </div>
-</div>
-<p class="help">Swipe on the screen or use the keys · Arrow keys / WASD on desktop · Space pauses</p>
+  <p class="help" id="help">Arrow keys or WASD to steer · Space to pause · edges wrap around</p>
 </main>
 <script>
 {
-/* ---------- Config ---------- */
-const L = 5;              // word length (later: grow this with level)
-const N = 15;             // arena is N x N cells, including the border wall
-const START = {x:4, y:7}; // head start cell, moving right
+/* ---------- Config: tweak these to tune the game ---------- */
+const COLS = 18, ROWS = 22;                          // board size in cells
+const START = {x: 5, y: 11};                         // head start cell, moving right
+const WORD_LEN = lvl => lvl <= 4 ? 5 : 6;            // 6-letter words from level 5
+const STEP_MS = lvl => Math.max(260, Math.round(1000 * Math.pow(0.9, lvl - 1))); // ms per move; level 1 = 1 move/sec
+const PTS_LETTER = 10, PTS_TARGET = 100, PTS_OWN_WORD = 250;  // word points are multiplied by level
 
-/* Common words only, so the rules feel fair. Add more freely; wrong-length entries are ignored. */
-const RAW = `ABOUT ABOVE ACORN ACTOR ACUTE ADMIT ADOPT ADORE ADULT AFTER AGAIN AGENT AGILE AGREE AHEAD AISLE ALARM ALBUM ALERT ALIEN ALIKE ALIVE ALLOW ALONE ALONG ALTER AMBER AMONG AMUSE ANGEL ANGER ANGLE ANGRY ANKLE APART APPLE APPLY APRON ARENA ARGUE ARISE ARMOR ARRAY ARROW ASIDE ASSET ATLAS ATTIC AUDIO AVOID AWARD AWARE
+/* Common words only, so the rules feel fair. Add more freely; entries of the wrong length are ignored. */
+const RAW5 = `ABOUT ABOVE ACORN ACTOR ACUTE ADMIT ADOPT ADORE ADULT AFTER AGAIN AGENT AGILE AGREE AHEAD AISLE ALARM ALBUM ALERT ALIEN ALIKE ALIVE ALLOW ALONE ALONG ALTER AMBER AMONG AMUSE ANGEL ANGER ANGLE ANGRY ANKLE APART APPLE APPLY APRON ARENA ARGUE ARISE ARMOR ARROW ASIDE ASSET ATLAS ATTIC AUDIO AVOID AWARD AWARE
 BACON BADGE BADLY BAGEL BAKER BASIC BASIN BATCH BEACH BEARD BEAST BEGAN BEGIN BEING BELLY BELOW BENCH BERRY BIRCH BIRTH BISON BLACK BLADE BLAME BLAND BLANK BLAST BLAZE BLEND BLESS BLIND BLINK BLISS BLOCK BLOOD BLOOM BLUFF BLUSH BOARD BONUS BOOST BOOTH BOUND BRAID BRAIN BRAKE BRAND BRASS BRAVE BREAD BREAK BREED BRICK BRIDE BRIEF BRINE BRING BRISK BROAD BROKE BROOK BROOM BROWN BRUSH BUDDY BUILD BUILT BUNCH BURST BUYER
 CABIN CABLE CAMEL CANDY CANOE CARGO CAROL CARRY CATCH CAUSE CEDAR CHAIN CHAIR CHALK CHAMP CHAOS CHARM CHART CHASE CHEAP CHECK CHEEK CHEER CHESS CHEST CHICK CHIEF CHILD CHILL CHIRP CHOIR CHOSE CHUNK CIDER CIVIL CLAIM CLASH CLASS CLEAN CLEAR CLICK CLIFF CLIMB CLOAK CLOCK CLOSE CLOUD CLOWN COACH COAST COBRA COCOA COMET CORAL COUCH COULD COUNT COURT COVER CRAFT CRANE CRASH CRAWL CRAZY CREAM CREEK CRIME CRISP CROSS CROWD CROWN CRUMB CRUSH CRUST CURLY CURVE CYCLE
 DAILY DAIRY DAISY DANCE DEALT DEATH DEBUT DECAY DECOY DELAY DELTA DENIM DEPTH DIARY DINER DITCH DIZZY DODGE DOING DONOR DONUT DOUBT DOUGH DOZEN DRAFT DRAIN DRAMA DRAWN DREAM DRESS DRIFT DRILL DRINK DRIVE DRONE DROVE DWARF DYING
@@ -99,29 +113,52 @@ TABLE TAKEN TALON TANGO TASTE TEACH TEETH TEMPO THANK THEFT THEIR THEME THERE TH
 UNCLE UNDER UNION UNITY UNTIL UNZIP UPPER UPSET URBAN USAGE USUAL VALID VALUE VAPOR VAULT VIDEO VIOLA VIPER VIRUS VISIT VITAL VIVID VOCAL VOICE
 WAFER WAGON WALTZ WASTE WATCH WATER WEARY WEAVE WEDGE WHALE WHEAT WHEEL WHERE WHICH WHILE WHIRL WHISK WHITE WHOLE WHOSE WIDTH WITCH WOMAN WORDY WORLD WORRY WORSE WORST WORTH WOULD WOUND WRATH WRIST WRITE WRONG WROTE YACHT YEAST YIELD YOUNG YOUTH ZEBRA ZESTY`;
 
+const RAW6 = `ACTION ADVICE AFFORD AGENCY ALMOST AMOUNT ANIMAL ANSWER ANYONE ANYWAY APPEAR ARTIST ATTACK AUTUMN AVENUE
+BANANA BASKET BATTLE BEAUTY BECOME BEFORE BEHIND BELONG BETTER BEYOND BOTTLE BOTTOM BRANCH BREATH BRIDGE BRIGHT BROKEN BUBBLE BUCKET BUDGET BURGER BUTTER BUTTON
+CAMERA CANDLE CANVAS CARPET CARROT CASTLE CHANCE CHANGE CHARGE CHEESE CHERRY CHOICE CHOOSE CHURCH CIRCLE CLEVER CLIENT CLOSET COFFEE COLUMN COMBAT COMEDY COMMON COOKIE CORNER COTTON COUPLE COURSE COUSIN CRAYON CREDIT CRISIS CUSTOM
+DANGER DEBATE DECIDE DEFEAT DEGREE DESIGN DETAIL DINNER DIRECT DOCTOR DOLLAR DONKEY DOUBLE DRAGON DRAWER DRIVER DURING
+EASILY EATING EFFECT EFFORT EIGHTY EITHER ENERGY ENGINE ENOUGH ENTIRE ESCAPE EXPERT
+FABRIC FAMILY FAMOUS FARMER FATHER FELLOW FINGER FINISH FLIGHT FLOWER FOLLOW FOREST FORGET FORMAL FOURTH FREEZE FRIDGE FRIEND FROZEN FUTURE
+GALAXY GARAGE GARDEN GARLIC GENTLE GINGER GLOBAL GOLDEN GROUND GROWTH GUITAR
+HAMMER HANDLE HAPPEN HEALTH HEIGHT HELMET HIDDEN HOCKEY HOLLOW HONEST IMPACT INCOME INDEED INSECT INSIDE INVITE ISLAND
+JACKET JIGSAW JUNGLE KETTLE KITTEN LADDER LAPTOP LATEST LAWYER LEADER LEAGUE LENGTH LESSON LETTER LIQUID LITTLE LIZARD LOCKET LOVELY
+MAGNET MARBLE MARKET MATTER MEADOW MEMORY MIDDLE MINUTE MIRROR MOBILE MOMENT MONKEY MOTHER MUFFIN MUSEUM
+NAPKIN NATION NATURE NEARBY NEARLY NEEDLE NOODLE NORMAL NOTICE NUMBER OBJECT ORANGE OXYGEN OYSTER
+PADDLE PALACE PARENT PARROT PEANUT PEBBLE PENCIL PEOPLE PEPPER PERIOD PERSON PICNIC PILLOW PIRATE PLANET PLENTY POCKET POETRY POLICE POLICY POTATO POWDER PRETTY PRINCE PUZZLE
+RABBIT RACKET RATHER REASON RECENT RECORD REMOTE REPAIR RESCUE RESULT RETURN REWARD RIBBON ROCKET
+SADDLE SAFETY SALMON SAMPLE SCHOOL SCREEN SEASON SECOND SECRET SELDOM SHADOW SHOWER SILVER SIMPLE SINGER SISTER SKETCH SLOWLY SMOOTH SNEEZE SOCCER SOCKET SPIDER SPIRIT SPRING SQUARE STABLE STATUE STEADY STICKY STREAM STREET STRING STRONG STUDIO SUBWAY SUDDEN SUMMER SUNSET SUPPER SWITCH SYMBOL
+TABLET TALENT TEMPLE TENNIS THANKS THIRTY THREAD TICKET TIMBER TOMATO TONGUE TRAVEL TURKEY TURTLE TWELVE TWENTY
+UNLESS UNLOCK USEFUL VALLEY VELVET VIOLIN VISION VOLUME WAITER WALNUT WALRUS WANDER WARMTH WEALTH WINDOW WINTER WISDOM WIZARD WONDER WOODEN WORKER WRITER YELLOW ZIPPER`;
+
 /* ---------- Dictionary ---------- */
-const WORDS = [...new Set(RAW.trim().split(/\s+/).filter(w => w.length === L && /^[A-Z]+$/.test(w)))];
-const PRE = new Set();
-WORDS.forEach(w => { for (let i = 1; i <= L; i++) PRE.add(w.slice(0, i)); });
+const DICT = {}, PRE = {};
+for (const [len, raw] of [[5, RAW5], [6, RAW6]]) {
+  DICT[len] = [...new Set(raw.trim().split(/\s+/).filter(w => w.length === len && /^[A-Z]+$/.test(w)))];
+  PRE[len] = new Set();
+  DICT[len].forEach(w => { for (let i = 1; i <= len; i++) PRE[len].add(w.slice(0, i)); });
+}
 const AZ = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 const FREQ = 'EEEEEEAAAAARRRRIIIIOOOOTTTTNNNNSSSSLLLCCCUUUDDPPMMHHGGBBFYWKV'.split('');
-const nextLetters = p => AZ.filter(c => PRE.has(p + c));
-const wordsFrom = p => WORDS.filter(w => w.startsWith(p));
+const nextLetters = (p, len) => AZ.filter(c => PRE[len].has(p + c));
+const wordsFrom = (p, len) => DICT[len].filter(w => w.startsWith(p));
+const TILES = ['#ff8787', '#ffa94d', '#ffd43b', '#74c0fc', '#b197fc', '#faa2c1'];
+const tileColor = ch => TILES[(ch.charCodeAt(0) * 7) % TILES.length];
 
 /* ---------- Helpers ---------- */
 const $ = s => document.querySelector(s);
 const rnd = n => Math.floor(Math.random() * n), pick = a => a[rnd(a.length)];
 const key = (x, y) => x + ',' + y;
-const cv = $('#cv'), ctx = cv.getContext('2d'), ov = $('#ov'), card = $('#card');
+const wrapXY = (x, y) => [(x % COLS + COLS) % COLS, (y % ROWS + ROWS) % ROWS];
+const cv = $('#cv'), ctx = cv.getContext('2d'), ov = $('#ov'), card = $('#card'), board = $('#board');
 let best = 0; try { best = +localStorage.getItem('wordsnake-best') || 0; } catch (e) {}
 
-function flood(block, sx, sy) {           // BFS distances over open cells
+function flood(block, sx, sy) {           // BFS distances over open cells; edges wrap
   const dist = new Map([[key(sx, sy), 0]]), q = [[sx, sy]];
-  while (q.length) {
-    const [x, y] = q.shift(), d = dist.get(key(x, y));
+  for (let qi = 0; qi < q.length; qi++) {
+    const [x, y] = q[qi], d = dist.get(key(x, y));
     for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
-      const nx = x + dx, ny = y + dy, k = key(nx, ny);
-      if (nx < 0 || ny < 0 || nx >= N || ny >= N || block.has(k) || dist.has(k)) continue;
+      const [nx, ny] = wrapXY(x + dx, y + dy), k = key(nx, ny);
+      if (block.has(k) || dist.has(k)) continue;
       dist.set(k, d + 1); q.push([nx, ny]);
     }
   }
@@ -130,76 +167,91 @@ function flood(block, sx, sy) {           // BFS distances over open cells
 
 function buildArena(level) {
   const wall = new Set();
-  for (let i = 0; i < N; i++) { wall.add(key(i, 0)); wall.add(key(i, N - 1)); wall.add(key(0, i)); wall.add(key(N - 1, i)); }
-  const safe = (x, y) => y >= START.y - 1 && y <= START.y + 1 && x >= 1 && x <= 10;
-  const pieces = Math.min(3 + level, 12);
+  const ok = (x, y) => x > 0 && y > 0 && x < COLS - 1 && y < ROWS - 1 && Math.abs(y - START.y) > 1;
+  const pieces = Math.min(2 + level, 10);
   for (let p = 0; p < pieces; p++) {
-    const x = 1 + rnd(N - 2), y = 1 + rnd(N - 2), t = rnd(3), len = 2 + rnd(4), cells = [];
+    const x = rnd(COLS), y = rnd(ROWS), t = rnd(4), len = 2 + rnd(3), cells = [];
     if (t === 0) for (let i = 0; i < len; i++) cells.push([x + i, y]);
     else if (t === 1) for (let i = 0; i < len; i++) cells.push([x, y + i]);
-    else cells.push([x, y], [x + 1, y], [x, y + 1], [x + 1, y + 1]);
-    cells.forEach(([a, b]) => { if (a > 0 && b > 0 && a < N - 1 && b < N - 1 && !safe(a, b)) wall.add(key(a, b)); });
+    else if (t === 2) cells.push([x, y], [x + 1, y], [x, y + 1], [x + 1, y + 1]);
+    else cells.push([x, y], [x, y + 1], [x, y + 2], [x + 1, y + 2]);
+    cells.forEach(([a, b]) => { if (ok(a, b)) wall.add(key(a, b)); });
   }
-  const seen = flood(wall, START.x, START.y);     // seal pockets so every open cell is reachable
-  for (let y = 1; y < N - 1; y++) for (let x = 1; x < N - 1; x++) if (!seen.has(key(x, y))) wall.add(key(x, y));
+  const seen = flood(wall, START.x, START.y);      // seal pockets so every open cell is reachable
+  for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (!seen.has(key(x, y))) wall.add(key(x, y));
   return wall;
 }
 
-/* Keep the board solvable: at least one letter that continues a real word is always reachable. */
+/* Keep the board solvable: the target's next letter (or, once off-script, a letter that
+   continues some real word) is always on the board and reachable. */
 function fillBoard() {
-  const p = S.word.join(''), valid = nextLetters(p);
+  const p = S.word.join(''), len = S.len, valid = nextLetters(p, len);
   const block = new Set(S.wall); S.snake.slice(1).forEach(s => block.add(key(s.x, s.y)));
   const h = S.snake[0], dist = flood(block, h.x, h.y);
   const taken = new Set(S.items.map(i => key(i.x, i.y)));
   const open = min => [...dist].filter(([k, d]) => d >= min && !taken.has(k)).map(([k]) => k);
-  let spots = open(3); if (spots.length < 4) spots = open(1);
+  let spots = open(4); if (spots.length < 6) spots = open(1);
   const place = ch => {
     if (!spots.length) return;
     const [x, y] = spots.splice(rnd(spots.length), 1)[0].split(',').map(Number);
     S.items.push({x, y, ch, born: performance.now()});
   };
-  const want = Math.min(valid.length, S.level < 3 ? 2 : 1);
-  const have = S.items.filter(i => valid.includes(i.ch) && dist.has(key(i.x, i.y)));
-  const pool = valid.filter(c => !have.some(i => i.ch === c));
-  let n = have.length;
-  while (n < want && pool.length) { place(pool.splice(rnd(pool.length), 1)[0]); n++; }
-  const target = Math.min(5 + S.level, 10);
+  const reachable = ch => S.items.some(i => i.ch === ch && dist.has(key(i.x, i.y)));
+  if (S.target.startsWith(p)) {
+    const need = S.target[p.length];
+    if (!reachable(need)) place(need);
+  } else if (!valid.some(reachable)) {
+    place(pick(wordsFrom(p, len))[p.length]);
+  }
+  const target = 7 + Math.min(S.level, 5);
   let guard = 0;
   while (S.items.length < target && spots.length && guard++ < 300) {
     const c = pick(FREQ);
-    if (valid.includes(c) && Math.random() < 0.65) continue;     // mostly decoys
+    if (valid.includes(c) && Math.random() < 0.7) continue;      // mostly decoys
     if (S.items.filter(i => i.ch === c).length >= 2) continue;
     place(c);
   }
 }
 
 /* ---------- Game state ---------- */
-let S = null;
-const interval = () => Math.max(70, 200 - (S.level - 1) * 15);
+let S = null, acc = 0;
+const onTrack = () => S.target.startsWith(S.word.join(''));
 
-function startLevel(level) {
-  S.level = level; S.wall = buildArena(level);
-  const w = pick(WORDS);
-  S.word = [w[0]]; S.snake = [{...START}, {x: START.x - 1, y: START.y}];
+function setupLevel(level) {
+  S.level = level; S.len = WORD_LEN(level); S.wall = buildArena(level);
+  S.target = pick(DICT[S.len]);
+  S.word = [S.target[0]];
+  S.snake = [{...START}, {x: START.x - 1, y: START.y}]; S.prev = S.snake.map(s => ({...s}));
   S.dir = [1, 0]; S.queue = []; S.items = []; S.flash = 0;
   fillBoard(); hud();
-  S.mode = 'ready';
-  show(`<p>Level ${level}</p><div class="big">${w[0]}</div><p>Spell a ${L}-letter word starting with ${w[0]}</p>`, true);
-  const id = S.id;
-  setTimeout(() => { if (S.id === id && S.mode === 'ready') { S.mode = 'play'; hide(); } }, 1600);
 }
-function newGame() { S = {level: 0, score: 0, found: [], id: Math.random()}; startLevel(1); }
+function startLevel(level) {
+  setupLevel(level);
+  S.mode = 'ready';
+  const fresh = level > 1 && WORD_LEN(level) > WORD_LEN(level - 1) ? `<p><b>Now with ${S.len}-letter words!</b></p>` : '';
+  show(`<p>Level ${level}</p><h2>Make this word</h2>${chips(S.target)}${fresh}<p>Tap, swipe or press a key to go</p>`);
+  const id = S.id;
+  setTimeout(() => { if (S.id === id && S.mode === 'ready' && S.level === level) go(); }, 3000);
+}
+function go() { S.mode = 'play'; hide(); acc = 0; S.lastStep = performance.now(); }
+function newGame() { S = {score: 0, found: [], id: Math.random()}; startLevel(1); }
+const chips = w => `<div class="chips">${[...w].map(c => `<span style="background:${tileColor(c)}">${c}</span>`).join('')}</div>`;
 
 function setDir(d) {
-  if (!S || (S.mode !== 'play' && S.mode !== 'ready')) return;
+  if (!S) return;
+  if (S.mode === 'ready') go();
+  if (S.mode !== 'play') return;
   const last = S.queue.length ? S.queue[S.queue.length - 1] : S.dir;
   if ((d[0] === -last[0] && d[1] === -last[1]) || (d[0] === last[0] && d[1] === last[1])) return;
   if (S.queue.length < 3) S.queue.push(d);
+  // At slow speeds, turn right away instead of waiting for the next tick
+  if (S.queue.length === 1 && performance.now() - S.lastStep > 150) acc = STEP_MS(S.level);
 }
 
 function step() {
   if (S.queue.length) S.dir = S.queue.shift();
-  const h = S.snake[0], nx = h.x + S.dir[0], ny = h.y + S.dir[1];
+  S.prev = S.snake.map(s => ({...s})); S.lastStep = performance.now();
+  const h = S.snake[0], [nx, ny] = wrapXY(h.x + S.dir[0], h.y + S.dir[1]);
   const idx = S.items.findIndex(i => i.x === nx && i.y === ny), grow = idx >= 0;
   const body = grow ? S.snake : S.snake.slice(0, -1);
   if (S.wall.has(key(nx, ny))) return over('wall');
@@ -207,52 +259,60 @@ function step() {
   S.snake.unshift({x: nx, y: ny});
   if (!grow) { S.snake.pop(); return; }
   const it = S.items.splice(idx, 1)[0];
-  S.word.push(it.ch); S.score += 10;
+  S.word.push(it.ch); S.score += PTS_LETTER;
   const p = S.word.join('');
-  if (!PRE.has(p)) { hud(); return over('word', p); }
-  if (p.length === L) return complete(p);
+  if (!PRE[S.len].has(p)) { hud(); return over('word', p); }
+  if (p.length === S.len) return complete(p);
   fillBoard(); hud();
 }
 
 function complete(w) {
-  S.mode = 'won'; S.found.push(w); S.score += 100 * S.level; S.flash = performance.now();
+  const own = w !== S.target, pts = (own ? PTS_OWN_WORD : PTS_TARGET) * S.level;
+  S.mode = 'won'; S.found.push(w); S.score += pts; S.flash = performance.now();
   hud(); saveBest();
-  show(`<span class="tag">${w}</span><p style="margin-top:8px">+${100 * S.level} bonus</p>`, false, true);
+  show(`<div class="toast"><strong>${own ? 'Bonus word! ' + w : w}</strong>+${pts} points</div>`, true);
   const id = S.id;
-  setTimeout(() => { if (S.id === id) startLevel(S.level + 1); }, 1500);
+  setTimeout(() => { if (S.id === id) startLevel(S.level + 1); }, 1700);
 }
 
 function over(why, p) {
   S.mode = 'over'; saveBest(); hud();
   const sofar = why === 'word' ? p.slice(0, -1) : S.word.join('');
-  const ex = pick(wordsFrom(sofar));
-  const head = {wall: 'Bonk! Into the wall.', self: 'You bit your own tail.', word: `No word starts with ${p}`}[why];
-  const tip = why === 'word' ? `From ${sofar} you could have made <b>${ex}</b>.` : `You were on ${sofar}. It could have been <b>${ex}</b>.`;
+  const head = {wall: 'Ouch, a wall!', self: 'You bit your own tail', word: `No word starts with ${p}`}[why];
+  const tip = S.target.startsWith(sofar) ? `You were on track for <b>${S.target}</b>.` : `From ${sofar} you could have made <b>${pick(wordsFrom(sofar, S.len))}</b>.`;
   show(`<h2>${head}</h2><p>${tip}</p><div class="big">${S.score}</div><p>${S.found.length ? 'Words: ' + S.found.join(', ') : 'No words yet'} · Best ${best}</p><button class="go" data-act="new">Play again</button>`);
 }
 function saveBest() { if (S.score > best) { best = S.score; try { localStorage.setItem('wordsnake-best', best); } catch (e) {} } }
 
 function togglePause() {
   if (!S) return;
-  if (S.mode === 'play') { S.mode = 'paused'; show(`<h2>Paused</h2><p>Spelling ${S.word.join('')}…</p><button class="go" data-act="resume">Resume</button>`); }
-  else if (S.mode === 'paused') { S.mode = 'play'; hide(); }
+  if (S.mode === 'play') { S.mode = 'paused'; show(`<h2>Paused</h2><p>Making <b>${S.target}</b></p><button class="go" data-act="resume">Resume</button>`); }
+  else if (S.mode === 'paused') go();
 }
 
 /* ---------- UI ---------- */
-function show(html, dim, clear) { card.innerHTML = html; ov.classList.remove('hide'); ov.classList.toggle('clear', !!clear); const b = card.querySelector('button'); if (b) b.focus({preventScroll: true}); }
+function show(html, clear) { card.innerHTML = html; card.style.display = clear ? 'contents' : ''; ov.classList.remove('hide'); ov.classList.toggle('clear', !!clear); const b = card.querySelector('button'); if (b) b.focus({preventScroll: true}); }
 function hide() { ov.classList.add('hide'); }
 function hud() {
   $('#lvl').textContent = S.level; $('#score').textContent = S.score; $('#best').textContent = Math.max(best, S.score);
+  const track = onTrack();
+  const lab = $('#label');
+  lab.textContent = track ? 'Make this word' : 'Off script! Finish any real word for bonus points';
+  lab.classList.toggle('off', !track);
   let h = '';
-  for (let i = 0; i < L; i++) h += `<div class="slot ${i < S.word.length ? 'on' : i === S.word.length ? 'next' : ''}">${S.word[i] || ''}</div>`;
+  for (let i = 0; i < S.len; i++) {
+    const got = S.word[i];
+    if (got) h += `<div class="slot on" style="background:${tileColor(got)}">${got}</div>`;
+    else h += `<div class="slot ghost${i === S.word.length ? ' next' : ''}">${track ? S.target[i] : ''}</div>`;
+  }
   $('#slots').innerHTML = h;
   $('#found').textContent = S.found.length ? 'Spelled: ' + S.found.join(' · ') : '';
 }
-$('#lenTag').textContent = `${L}-letter words`;
 
 ov.addEventListener('click', e => {
-  const a = e.target.closest('[data-act]'); if (!a) return;
-  if (a.dataset.act === 'new') newGame(); else if (a.dataset.act === 'resume') togglePause();
+  const a = e.target.closest('[data-act]');
+  if (a) { if (a.dataset.act === 'new') newGame(); else if (a.dataset.act === 'resume') togglePause(); }
+  else if (S && S.mode === 'ready') go();
 });
 document.querySelectorAll('#pad [data-d]').forEach(b => b.addEventListener('pointerdown', e => { e.preventDefault(); setDir(b.dataset.d.split(',').map(Number)); }));
 $('#pauseBtn').addEventListener('click', togglePause);
@@ -260,12 +320,11 @@ $('#pauseBtn').addEventListener('click', togglePause);
 const KEYS = {ArrowUp:[0,-1], w:[0,-1], W:[0,-1], ArrowDown:[0,1], s:[0,1], S:[0,1], ArrowLeft:[-1,0], a:[-1,0], A:[-1,0], ArrowRight:[1,0], d:[1,0], D:[1,0]};
 addEventListener('keydown', e => {
   if (KEYS[e.key]) { e.preventDefault(); setDir(KEYS[e.key]); }
-  else if (e.key === ' ' || e.key === 'p' || e.key === 'P') { e.preventDefault(); togglePause(); }
+  else if (e.key === ' ' || e.key === 'p' || e.key === 'P') { e.preventDefault(); if (S.mode === 'ready') go(); else togglePause(); }
   else if (e.key === 'Enter' && (S.mode === 'over' || S.mode === 'menu')) { e.preventDefault(); newGame(); }
 });
 
 let t0 = null;
-const board = $('#board');
 board.addEventListener('touchstart', e => { const t = e.touches[0]; t0 = [t.clientX, t.clientY]; }, {passive: true});
 board.addEventListener('touchmove', e => {
   if (!t0) return; e.preventDefault();
@@ -276,75 +335,100 @@ board.addEventListener('touchmove', e => {
 }, {passive: false});
 board.addEventListener('touchend', () => { t0 = null; });
 document.addEventListener('visibilitychange', () => { if (document.hidden && S && S.mode === 'play') togglePause(); });
+if (matchMedia('(hover:hover) and (pointer:fine)').matches === false) $('#help').textContent = 'Swipe on the board or use the arrows · edges wrap around';
 
 /* ---------- Rendering ---------- */
 let cell = 20;
 function fit() {
-  const w = board.clientWidth, hAvail = innerHeight - 380;
-  const size = Math.max(N * 14, Math.floor(Math.min(w, Math.max(hAvail, 240)) / N) * N);
-  const dpr = devicePixelRatio || 1;
-  cv.style.width = cv.style.height = size + 'px';
-  cv.width = cv.height = Math.round(size * dpr);
-  cell = cv.width / N;
+  const pad = $('#pad'), padH = getComputedStyle(pad).display === 'none' ? 0 : pad.offsetHeight + 8;
+  const used = $('.top').offsetHeight + $('.target').offsetHeight + padH + $('#help').offsetHeight + $('#found').offsetHeight + 58;
+  const wA = $('main').clientWidth - 24, hA = innerHeight - used;
+  cell = Math.max(14, Math.min(40, Math.floor(Math.min(wA / COLS, hA / ROWS))));
+  const w = cell * COLS, h = cell * ROWS, dpr = devicePixelRatio || 1;
+  board.style.width = w + 'px'; board.style.height = h + 'px';
+  cv.style.width = w + 'px'; cv.style.height = h + 'px';
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
-const ro = new ResizeObserver(fit); ro.observe(board); addEventListener('resize', fit);
+const ro = new ResizeObserver(fit); ro.observe($('main')); addEventListener('resize', fit);
 
-function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); }
+function rr(x, y, w, h, r) { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); }
+const font = s => `700 ${Math.round(cell * s)}px "Atkinson Hyperlegible", Verdana, sans-serif`;
+
 function draw(now) {
-  const c = cell, W = cv.width, PX = '#263015', LCD = '#b4c368';
-  ctx.clearRect(0, 0, W, W);
-  ctx.fillStyle = 'rgba(38,48,21,.07)';
-  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) ctx.fillRect(x * c + c * .08, y * c + c * .08, c * .84, c * .84);
-  if (!S) return;
-  const inv = S.mode === 'won' && Math.floor((now - S.flash) / 160) % 2 === 0;
+  const c = cell, W = COLS * c, H = ROWS * c;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = 'rgba(255,255,255,.07)';
+  for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) { ctx.beginPath(); ctx.arc((x + .5) * c, (y + .5) * c, Math.max(1, c * .06), 0, 7); ctx.fill(); }
+  if (!S || !S.wall) return;
+  // walls
   for (const k of S.wall) {
     const [x, y] = k.split(',').map(Number);
-    ctx.fillStyle = PX; ctx.fillRect(x * c + c * .05, y * c + c * .05, c * .9, c * .9);
-    ctx.fillStyle = '#56632b'; ctx.fillRect(x * c + c * .3, y * c + c * .3, c * .4, c * .4);
+    ctx.fillStyle = '#34415f'; rr(x * c + c * .06, y * c + c * .06, c * .88, c * .88, c * .22); ctx.fill();
+    ctx.fillStyle = '#45547a'; rr(x * c + c * .06, y * c + c * .06, c * .88, c * .5, c * .22); ctx.fill();
   }
+  // letter tiles
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  const font = s => `700 ${Math.floor(c * s)}px "Pixelify Sans", monospace`;
   for (const it of S.items) {
-    const a = Math.min(1, (now - it.born) / 220), s = c * (.5 + .4 * a), o = (c - s) / 2;
-    ctx.strokeStyle = PX; ctx.lineWidth = Math.max(1.5, c * .08);
-    rr(it.x * c + o, it.y * c + o, s, s, c * .18); ctx.stroke();
-    ctx.fillStyle = PX; ctx.font = font(.62 * a + .01); ctx.fillText(it.ch, it.x * c + c / 2, it.y * c + c * .54);
+    const a = Math.min(1, (now - it.born) / 240), e = 1 - Math.pow(1 - a, 3), s = c * .9 * (.4 + .6 * e), o = (c - s) / 2;
+    const x = it.x * c + o, y = it.y * c + o;
+    ctx.fillStyle = 'rgba(0,0,0,.35)'; rr(x, y + c * .07, s, s, c * .22); ctx.fill();
+    ctx.fillStyle = tileColor(it.ch); rr(x, y, s, s, c * .22); ctx.fill();
+    ctx.fillStyle = '#1d1b2f'; ctx.font = font(.66 * e + .01); ctx.fillText(it.ch, it.x * c + c / 2, it.y * c + c * .53);
   }
-  const n = S.word.length;
-  S.snake.forEach((s, i) => {
-    const x = s.x * c, y = s.y * c;
-    ctx.fillStyle = inv ? LCD : PX;
-    rr(x + c * .04, y + c * .04, c * .92, c * .92, i === 0 ? c * .38 : c * .2); ctx.fill();
-    if (inv) { ctx.strokeStyle = PX; ctx.lineWidth = c * .08; ctx.stroke(); }
-    if (i === 0) {
-      const [dx, dy] = S.dir, ex = x + c / 2 + dx * c * .18, ey = y + c / 2 + dy * c * .18;
-      ctx.fillStyle = inv ? PX : LCD;
-      for (const side of [-1, 1]) { ctx.beginPath(); ctx.arc(ex + dy * side * c * .2, ey + dx * side * c * .2, c * .1, 0, 7); ctx.fill(); }
-    } else {
-      const ch = S.word[n - i];
-      if (ch) { ctx.fillStyle = inv ? PX : LCD; ctx.font = font(.62); ctx.fillText(ch, x + c / 2, y + c * .54); }
-    }
+  // snake (glides between cells)
+  const t = S.mode === 'play' ? Math.min(1, acc / STEP_MS(S.level)) : 1;
+  const pts = S.snake.map((s, i) => {
+    const f = S.prev[i] || s;
+    let dx = s.x - f.x, dy = s.y - f.y;
+    if (dx > 1) dx -= COLS; if (dx < -1) dx += COLS; if (dy > 1) dy -= ROWS; if (dy < -1) dy += ROWS;
+    const [x, y] = [(f.x + dx * t + COLS) % COLS, (f.y + dy * t + ROWS) % ROWS];
+    return {x: (x + .5) * c, y: (y + .5) * c};
   });
+  const won = S.mode === 'won', n = S.word.length, len = pts.length;
+  const hue = i => 165 + 25 * (i / Math.max(1, len - 1));
+  ctx.save();
+  if (won) { ctx.shadowColor = '#ffd43b'; ctx.shadowBlur = c * (.6 + .4 * Math.sin((now - S.flash) / 90)); }
+  ctx.lineCap = 'round'; ctx.lineWidth = c * .7;
+  for (let i = len - 1; i > 0; i--) {
+    const a = pts[i], b = pts[i - 1];
+    if (Math.abs(a.x - b.x) > c * 1.5 || Math.abs(a.y - b.y) > c * 1.5) continue;   // wrapped across an edge
+    ctx.strokeStyle = `hsl(${hue(i)} 68% 52%)`;
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  }
+  for (let i = len - 1; i >= 0; i--) {
+    const p = pts[i];
+    ctx.fillStyle = i === 0 ? '#38d9a9' : `hsl(${hue(i)} 70% 58%)`;
+    ctx.beginPath(); ctx.arc(p.x, p.y, c * (i === 0 ? .5 : .43), 0, 7); ctx.fill();
+  }
+  ctx.restore();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = font(.62);
+  for (let i = 1; i < len; i++) { const ch = S.word[n - i]; if (ch) { ctx.fillStyle = '#06281f'; ctx.fillText(ch, pts[i].x, pts[i].y + c * .03); } }
+  const hd = pts[0], [ddx, ddy] = S.dir;
+  for (const side of [-1, 1]) {
+    const ex = hd.x + ddx * c * .14 + ddy * side * c * .2, ey = hd.y + ddy * c * .14 + ddx * side * c * .2;
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(ex, ey, c * .13, 0, 7); ctx.fill();
+    ctx.fillStyle = '#141b30'; ctx.beginPath(); ctx.arc(ex + ddx * c * .05, ey + ddy * c * .05, c * .065, 0, 7); ctx.fill();
+  }
 }
 
-let last = 0, acc = 0;
+let last = 0;
 function loop(t) {
   requestAnimationFrame(loop);
   const dt = Math.min(t - last, 250); last = t;
   if (S && S.mode === 'play') {
-    acc += dt; const iv = interval();
+    acc += dt; const iv = STEP_MS(S.level);
     while (acc >= iv && S.mode === 'play') { acc -= iv; step(); }
-  } else acc = 0;
+  }
   draw(t);
 }
 
 /* ---------- Start screen ---------- */
-S = {level: 1, score: 0, found: [], id: 0, mode: 'menu'};
-S.wall = buildArena(1); S.word = [pick(WORDS)[0]]; S.snake = [{...START}, {x: START.x - 1, y: START.y}];
-S.dir = [1, 0]; S.queue = []; S.items = []; fillBoard(); hud();
-show(`<h2>Word Snake</h2><ul><li>Your tail starts with one letter.</li><li>Eat letters to spell a ${L}-letter word, in order.</li><li>Eat a letter that can't lead to a real word and you lose.</li><li>Each word gets you a faster snake and a new arena.</li></ul><button class="go" data-act="new">Play</button>`);
+S = {score: 0, found: [], id: 0};
+setupLevel(1); S.mode = 'menu';
+show(`<h2>Word Snake</h2><ul><li>Steer the snake to eat the letters of the word shown, in order.</li><li>Spell a different real word instead for bonus points.</li><li>Eat a letter that can't make any word and it's game over.</li><li>Fly off one edge to come back on the other side.</li></ul><button class="go" data-act="new">Play</button>`);
 fit(); requestAnimationFrame(loop);
-document.fonts && document.fonts.ready.then(fit);
+if (document.fonts) document.fonts.ready.then(fit);
 }
 </script>
 </body></html>

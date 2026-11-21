@@ -37,8 +37,8 @@ h1{font-size:26px;line-height:1.05;margin:0;font-weight:800;display:flex;align-i
 @keyframes pop{from{transform:scale(.6)}}
 .board{position:relative;margin:12px auto 0;border-radius:16px;background:var(--board);box-shadow:0 22px 40px -22px rgba(10,15,40,.7);overflow:hidden}
 canvas{display:block}
-.ov{position:absolute;inset:0;display:grid;place-items:center;padding:14px;background:rgba(12,17,34,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
-.ov.hide{display:none}.ov.clear{background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none;pointer-events:none}
+.ov{position:absolute;inset:0;display:flex;padding:14px;overflow:auto;background:rgba(12,17,34,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.ov.hide{display:none}.ov.full{position:fixed;z-index:10;padding:16px max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}.ov>.card{margin:auto}.ov.clear{background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none;pointer-events:none}
 .card{background:var(--card);color:var(--ink);border-radius:20px;padding:18px 18px 16px;max-width:310px;width:100%;text-align:center;box-shadow:0 20px 40px -12px rgba(0,0,0,.45)}
 .card h2{font-size:24px;line-height:1.1;margin:0 0 8px;font-weight:800;text-wrap:balance}
 .card p{margin:0 0 10px;font-size:15px;color:var(--muted)}.card p b{color:var(--ink)}
@@ -59,6 +59,8 @@ canvas{display:block}
 .help{font-size:13px;color:var(--muted);text-align:center;margin:10px 0 0}
 @media(hover:hover) and (pointer:fine){.pad{display:none}}
 @media(max-width:380px){.slot{width:36px;height:42px;font-size:24px}.pill{padding:4px 8px}h1{font-size:22px}}
+@media(max-height:760px){.pad{grid-template-columns:repeat(4,60px);grid-template-rows:44px}.l{grid-area:1/1}.u{grid-area:1/2}.d{grid-area:1/3}.r{grid-area:1/4}
+  .target{padding:6px 10px 8px;margin-top:8px}.label{margin-bottom:4px}.slot{height:38px}h1{font-size:22px}.board{margin-top:8px}.help{display:none}.found{margin-top:6px}}
 @media(prefers-reduced-motion:reduce){.slot.on{animation:none}}
 </style></head><body>
 <main>
@@ -291,7 +293,7 @@ function togglePause() {
 }
 
 /* ---------- UI ---------- */
-function show(html, clear) { card.innerHTML = html; card.style.display = clear ? 'contents' : ''; ov.classList.remove('hide'); ov.classList.toggle('clear', !!clear); const b = card.querySelector('button'); if (b) b.focus({preventScroll: true}); }
+function show(html, clear) { card.innerHTML = html; card.style.display = clear ? 'contents' : ''; ov.classList.remove('hide'); ov.classList.toggle('clear', !!clear); ov.classList.toggle('full', !clear); const b = card.querySelector('button'); if (b) b.focus({preventScroll: true}); }
 function hide() { ov.classList.add('hide'); }
 function hud() {
   $('#lvl').textContent = S.level; $('#score').textContent = S.score; $('#best').textContent = Math.max(best, S.score);

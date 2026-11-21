@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Word Snake</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: playful, nostalgic, tactile — an old candybar phone in your hand
+   IDEA: the phone itself; the page is the handset, the game is its LCD
+   PICTURE: the pea-green LCD arena with a lettered snake, d-pad keys below
+   COLOUR and TYPE: LCD green + pixel ink, slate-blue plastic case; Pixelify Sans
+   LAYOUT: one centred handset: brand, word slots, arena, keys; fits a phone screen */
+:root{color-scheme:light dark;--bg:light-dark(#e3e6d8,#10130c);--ink:light-dark(#2a3020,#cfd5bf);--lcd:#b4c368;--lcd2:#a6b55c;--px:#263015;--px2:#56632b;--case:#2c3a57;--case2:#19223a;--key:#45567a}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Pixelify Sans",ui-monospace,monospace;overflow-x:clip;display:grid;place-items:center;padding:12px 10px 20px;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+.phone{width:min(100%,430px);background:linear-gradient(160deg,#36476a,var(--case) 40%,var(--case2));border-radius:34px 34px 46px 46px;padding:14px 14px 20px;box-shadow:0 24px 40px -18px rgba(0,0,0,.55),inset 0 2px 0 rgba(255,255,255,.18),inset 0 -4px 0 rgba(0,0,0,.25)}
+.brand{display:flex;justify-content:space-between;align-items:center;color:#cdd6ea;padding:0 10px 8px;font-weight:600}
+.brand b{font-size:20px;font-weight:700}.brand span{font-size:13px;opacity:.7}
+.bezel{background:#0f1524;border-radius:14px;padding:7px;box-shadow:inset 0 2px 6px rgba(0,0,0,.6)}
+.screen{background:radial-gradient(120% 90% at 30% 20%,#c1cf76,var(--lcd) 55%,var(--lcd2));border-radius:8px;padding:8px 8px 10px;color:var(--px);box-shadow:inset 0 4px 14px rgba(0,0,0,.22)}
+.hud{display:flex;justify-content:space-between;font-size:15px;padding:0 4px;font-variant-numeric:tabular-nums}
+.hud b{font-weight:700}
+.slots{display:flex;gap:6px;justify-content:center;margin:6px 0 8px}
+.slot{width:38px;height:42px;border:2px dashed var(--px2);border-radius:5px;display:grid;place-items:center;font-size:26px;font-weight:700;line-height:1}
+.slot.on{background:var(--px);color:var(--lcd);border-style:solid;border-color:var(--px)}
+.slot.next{border-style:solid;border-color:var(--px);animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{border-color:transparent}}
+.board{position:relative;touch-action:none;display:grid;place-items:center}
+canvas{display:block;image-rendering:pixelated;border-radius:3px}
+.ov{position:absolute;inset:0;display:grid;place-items:center;background:rgba(180,195,104,.9);border-radius:3px;padding:10px;overflow:auto}
+.ov.hide{display:none}.ov.clear{background:transparent;pointer-events:none}
+.card{text-align:center;max-width:320px;color:var(--px)}
+.card h2{font-size:26px;line-height:1.05;margin:0 0 8px;text-wrap:balance}
+.card p{margin:0 0 10px;font-size:16px}
+.card ul{text-align:left;margin:0 0 12px;padding-left:20px;font-size:15px}.card li{margin-bottom:3px}
+.big{font-size:44px;font-weight:700;line-height:1;margin:4px 0 10px}
+.tag{display:inline-block;background:var(--px);color:var(--lcd);padding:4px 10px;border-radius:6px;font-size:22px;font-weight:700}
+.go{font:700 19px "Pixelify Sans",monospace;background:var(--px);color:var(--lcd);border:0;border-radius:9px;padding:10px 26px;min-height:46px;cursor:pointer}
+.go:focus-visible,.pad button:focus-visible{outline:3px solid #f2f6c8;outline-offset:2px}
+.found{color:#cdd6ea;font-size:14px;text-align:center;min-height:21px;margin:10px 6px 0;overflow-wrap:anywhere}
+.pad{display:grid;grid-template-columns:repeat(3,62px);grid-template-rows:repeat(3,50px);gap:6px;justify-content:center;margin-top:10px}
+.pad button{background:linear-gradient(#56688f,var(--key));border:0;border-radius:14px;color:#e2e8f5;display:grid;place-items:center;box-shadow:0 4px 0 #121a2c,inset 0 1px 0 rgba(255,255,255,.25);cursor:pointer;touch-action:manipulation}
+.pad button:active{transform:translateY(3px);box-shadow:0 1px 0 #121a2c}
+.pad svg{width:22px;height:22px;fill:currentColor}
+.u{grid-area:1/2}.l{grid-area:2/1}.c{grid-area:2/2;border-radius:50%!important}.r{grid-area:2/3}.d{grid-area:3/2}
+.help{font-size:13px;text-align:center;margin-top:12px;opacity:.75}
+@media(max-height:720px){.pad{grid-template-rows:repeat(3,42px)}.slot{height:36px;width:34px;font-size:22px}}
+@media(prefers-reduced-motion:reduce){.slot.next{animation:none}}
+</style></head><body>
+<main>
+<div class="phone">
+  <div class="brand"><b>Word Snake</b><span id="lenTag">5-letter words</span></div>
+  <div class="bezel"><div class="screen">
+    <div class="hud"><span>Lvl <b id="lvl">1</b></span><span>Score <b id="score">0</b></span><span>Best <b id="best">0</b></span></div>
+    <div class="slots" id="slots"></div>
+    <div class="board" id="board">
+      <canvas id="cv" width="300" height="300" aria-label="Game arena"></canvas>
+      <div class="ov" id="ov"><div class="card" id="card"></div></div>
+    </div>
+  </div></div>
+  <div class="found" id="found"></div>
+  <div class="pad" id="pad">
+    <button class="u" data-d="0,-1" aria-label="Up"><svg viewBox="0 0 24 24"><path d="M12 5l8 12H4z"/></svg></button>
+    <button class="l" data-d="-1,0" aria-label="Left"><svg viewBox="0 0 24 24"><path d="M5 12l12-8v16z"/></svg></button>
+    <button class="c" id="pauseBtn" aria-label="Pause"><svg viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg></button>
+    <button class="r" data-d="1,0" aria-label="Right"><svg viewBox="0 0 24 24"><path d="M19 12L7 20V4z"/></svg></button>
+    <button class="d" data-d="0,1" aria-label="Down"><svg viewBox="0 0 24 24"><path d="M12 19L4 7h16z"/></svg></button>
+  </div>
+</div>
+<p class="help">Swipe on the screen or use the keys · Arrow keys / WASD on desktop · Space pauses</p>
+</main>
+<script>
+{
+/* ---------- Config ---------- */
+const L = 5;              // word length (later: grow this with level)
+const N = 15;             // arena is N x N cells, including the border wall
+const START = {x:4, y:7}; // head start cell, moving right
+
+/* Common words only, so the rules feel fair. Add more freely; wrong-length entries are ignored. */
+const RAW = `ABOUT ABOVE ACORN ACTOR ACUTE ADMIT ADOPT ADORE ADULT AFTER AGAIN AGENT AGILE AGREE AHEAD AISLE ALARM ALBUM ALERT ALIEN ALIKE ALIVE ALLOW ALONE ALONG ALTER AMBER AMONG AMUSE ANGEL ANGER ANGLE ANGRY ANKLE APART APPLE APPLY APRON ARENA ARGUE ARISE ARMOR ARRAY ARROW ASIDE ASSET ATLAS ATTIC AUDIO AVOID AWARD AWARE
+BACON BADGE BADLY BAGEL BAKER BASIC BASIN BATCH BEACH BEARD BEAST BEGAN BEGIN BEING BELLY BELOW BENCH BERRY BIRCH BIRTH BISON BLACK BLADE BLAME BLAND BLANK BLAST BLAZE BLEND BLESS BLIND BLINK BLISS BLOCK BLOOD BLOOM BLUFF BLUSH BOARD BONUS BOOST BOOTH BOUND BRAID BRAIN BRAKE BRAND BRASS BRAVE BREAD BREAK BREED BRICK BRIDE BRIEF BRINE BRING BRISK BROAD BROKE BROOK BROOM BROWN BRUSH BUDDY BUILD BUILT BUNCH BURST BUYER
+CABIN CABLE CAMEL CANDY CANOE CARGO CAROL CARRY CATCH CAUSE CEDAR CHAIN CHAIR CHALK CHAMP CHAOS CHARM CHART CHASE CHEAP CHECK CHEEK CHEER CHESS CHEST CHICK CHIEF CHILD CHILL CHIRP CHOIR CHOSE CHUNK CIDER CIVIL CLAIM CLASH CLASS CLEAN CLEAR CLICK CLIFF CLIMB CLOAK CLOCK CLOSE CLOUD CLOWN COACH COAST COBRA COCOA COMET CORAL COUCH COULD COUNT COURT COVER CRAFT CRANE CRASH CRAWL CRAZY CREAM CREEK CRIME CRISP CROSS CROWD CROWN CRUMB CRUSH CRUST CURLY CURVE CYCLE
+DAILY DAIRY DAISY DANCE DEALT DEATH DEBUT DECAY DECOY DELAY DELTA DENIM DEPTH DIARY DINER DITCH DIZZY DODGE DOING DONOR DONUT DOUBT DOUGH DOZEN DRAFT DRAIN DRAMA DRAWN DREAM DRESS DRIFT DRILL DRINK DRIVE DRONE DROVE DWARF DYING
+EAGER EAGLE EARLY EARTH EBONY EIGHT ELBOW ELITE EMBER EMPTY ENEMY ENJOY ENTER ENTRY EQUAL ERROR ERUPT ESSAY EVENT EVERY EXACT EXIST EXTRA
+FABLE FAINT FAIRY FAITH FALSE FAULT FEAST FENCE FERRY FETCH FEVER FIBER FIELD FIERY FIFTH FIFTY FIGHT FINAL FINCH FIRST FIXED FLAKE FLAME FLANK FLARE FLASH FLASK FLEET FLINT FLOAT FLOCK FLOOD FLOOR FLORA FLOUR FLUID FLUTE FOCUS FOGGY FORCE FORGE FORTH FORTY FORUM FOUND FRAME FRANK FRAUD FRESH FRONT FROST FROZE FRUIT FUDGE FULLY FUNNY
+GAMER GECKO GHOST GIANT GIDDY GIVEN GLADE GLARE GLASS GLAZE GLEAM GLIDE GLOBE GLOOM GLORY GLOVE GOING GOOSE GRACE GRADE GRAIN GRAND GRANT GRAPE GRAPH GRASP GRASS GRAVY GREAT GREEN GRILL GRIND GROAN GROOM GROSS GROUP GROVE GROWL GROWN GUARD GUAVA GUESS GUEST GUIDE GUILD
+HABIT HAIKU HAPPY HASTE HATCH HAVEN HAZEL HEART HEAVY HEDGE HENCE HERON HIPPO HOBBY HONEY HONOR HORSE HOTEL HOUSE HUMAN HUMID HUMOR HURRY HYENA
+ICING IDEAL IGLOO IMAGE INDEX INNER INPUT ISSUE IVORY JELLY JEWEL JOINT JOLLY JUDGE JUICE JUICY KAYAK KNACK KNEEL KNIFE KNOCK KNOWN KOALA
+LABEL LADLE LANCE LARGE LASER LATCH LATER LAUGH LAYER LEAFY LEARN LEASE LEAST LEAVE LEGAL LEMON LEMUR LEVEL LIGHT LILAC LIMIT LINEN LLAMA LOBBY LOCAL LODGE LOFTY LOGIC LOOSE LOTUS LOWER LOYAL LUCKY LUNAR LUNCH LYING
+MAGIC MAJOR MAKER MANGO MANOR MAPLE MARCH MARSH MATCH MAYBE MAYOR MEANT MEDAL MEDIA MELON MERCY MERRY METAL MIGHT MINOR MINUS MIXED MODEL MOIST MONEY MONTH MOOSE MORAL MOSSY MOTEL MOTOR MOTTO MOUNT MOUSE MOUTH MOVIE MUDDY MUSIC
+NACHO NERVE NEVER NEWLY NIGHT NINJA NOBLE NOISE NOMAD NORTH NOVEL NUDGE NURSE OASIS OCCUR OCEAN OFFER OFTEN OLIVE ONION OPERA ORBIT ORDER OTHER OTTER OUGHT OUNCE OZONE
+PAINT PANDA PANEL PAPER PARTY PASTA PATIO PEACE PEACH PEARL PECAN PEDAL PENNY PERCH PETAL PHASE PHONE PHOTO PIANO PICKY PIECE PILOT PITCH PIXEL PIZZA PLACE PLAIN PLANE PLANT PLATE PLAZA PLUCK PLUME PLUMP PLUSH POINT POLAR POPPY PORCH POUCH POUND POWER PRANK PRAWN PRESS PRICE PRIDE PRIME PRINT PRIOR PRISM PRIZE PROOF PROUD PROVE PULSE PUPIL PUPPY
+QUACK QUAIL QUAKE QUART QUEEN QUEST QUICK QUIET QUILT QUIRK QUITE QUOTA QUOTE
+RADAR RADIO RAINY RAISE RALLY RANGE RAPID RATIO RAVEN RAZOR REACH READY RELAX REPLY RHINO RHYME RIDGE RIGHT RINSE RIPEN RIVAL RIVER ROAST ROBOT ROCKY ROOST ROUGH ROUND ROUTE ROVER ROYAL RURAL RUSTY
+SADLY SALAD SALSA SANDY SATIN SAUCE SAUNA SCALE SCARF SCENE SCENT SCONE SCOOP SCOPE SCORE SCOUT SCRUB SEDAN SENSE SERVE SEVEN SHADE SHAKE SHALL SHAPE SHARE SHARK SHARP SHEEP SHEET SHELF SHELL SHIFT SHINE SHINY SHIRT SHOCK SHOOT SHORE SHORT SHOUT SHOWN SHRUB SIGHT SINCE SIREN SIXTH SIXTY SKATE SKILL SKUNK SLATE SLEEP SLEET SLICE SLIDE SLOTH SLUMP SMALL SMART SMILE SMOKE SNACK SNAIL SNAKE SNEAK SNORE SNOWY SOLAR SOLID SOLVE SONIC SORRY SOUND SOUTH SPACE SPARE SPARK SPEAK SPEED SPEND SPENT SPICE SPICY SPIKE SPINE SPLIT SPOKE SPOON SPORT SPRAY SPREE SQUAD SQUID STAFF STAGE STAKE STALE STALK STAMP STAND STARE START STATE STEAM STEEL STEEP STICK STILL STING STINK STOCK STOMP STONE STOOD STOOL STORE STORK STORM STORY STOVE STRAW STRAY STRIP STRUM STUCK STUDY STUFF STYLE SUGAR SUNNY SUPER SURGE SWAMP SWARM SWEAT SWEET SWEPT SWIFT SWING SWIRL SWORD SYRUP
+TABLE TAKEN TALON TANGO TASTE TEACH TEETH TEMPO THANK THEFT THEIR THEME THERE THESE THICK THING THINK THIRD THORN THOSE THREE THREW THROW THUMB THYME TIARA TIGER TIGHT TIRED TITLE TOAST TODAY TONIC TOOTH TOPIC TORCH TOTAL TOUCH TOUGH TOWEL TOWER TRACK TRADE TRAIL TRAIN TREAD TREAT TREND TRIAL TRIBE TRICK TRIED TROLL TROUT TRUCK TRULY TRUST TRUTH TULIP TUMMY TUTOR TWICE TWIRL
+UNCLE UNDER UNION UNITY UNTIL UNZIP UPPER UPSET URBAN USAGE USUAL VALID VALUE VAPOR VAULT VIDEO VIOLA VIPER VIRUS VISIT VITAL VIVID VOCAL VOICE
+WAFER WAGON WALTZ WASTE WATCH WATER WEARY WEAVE WEDGE WHALE WHEAT WHEEL WHERE WHICH WHILE WHIRL WHISK WHITE WHOLE WHOSE WIDTH WITCH WOMAN WORDY WORLD WORRY WORSE WORST WORTH WOULD WOUND WRATH WRIST WRITE WRONG WROTE YACHT YEAST YIELD YOUNG YOUTH ZEBRA ZESTY`;
+
+/* ---------- Dictionary ---------- */
+const WORDS = [...new Set(RAW.trim().split(/\s+/).filter(w => w.length === L && /^[A-Z]+$/.test(w)))];
+const PRE = new Set();
+WORDS.forEach(w => { for (let i = 1; i <= L; i++) PRE.add(w.slice(0, i)); });
+const AZ = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+const FREQ = 'EEEEEEAAAAARRRRIIIIOOOOTTTTNNNNSSSSLLLCCCUUUDDPPMMHHGGBBFYWKV'.split('');
+const nextLetters = p => AZ.filter(c => PRE.has(p + c));
+const wordsFrom = p => WORDS.filter(w => w.startsWith(p));
+
+/* ---------- Helpers ---------- */
+const $ = s => document.querySelector(s);
+const rnd = n => Math.floor(Math.random() * n), pick = a => a[rnd(a.length)];
+const key = (x, y) => x + ',' + y;
+const cv = $('#cv'), ctx = cv.getContext('2d'), ov = $('#ov'), card = $('#card');
+let best = 0; try { best = +localStorage.getItem('wordsnake-best') || 0; } catch (e) {}
+
+function flood(block, sx, sy) {           // BFS distances over open cells
+  const dist = new Map([[key(sx, sy), 0]]), q = [[sx, sy]];
+  while (q.length) {
+    const [x, y] = q.shift(), d = dist.get(key(x, y));
+    for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+      const nx = x + dx, ny = y + dy, k = key(nx, ny);
+      if (nx < 0 || ny < 0 || nx >= N || ny >= N || block.has(k) || dist.has(k)) continue;
+      dist.set(k, d + 1); q.push([nx, ny]);
+    }
+  }
+  return dist;
+}
+
+function buildArena(level) {
+  const wall = new Set();
+  for (let i = 0; i < N; i++) { wall.add(key(i, 0)); wall.add(key(i, N - 1)); wall.add(key(0, i)); wall.add(key(N - 1, i)); }
+  const safe = (x, y) => y >= START.y - 1 && y <= START.y + 1 && x >= 1 && x <= 10;
+  const pieces = Math.min(3 + level, 12);
+  for (let p = 0; p < pieces; p++) {
+    const x = 1 + rnd(N - 2), y = 1 + rnd(N - 2), t = rnd(3), len = 2 + rnd(4), cells = [];
+    if (t === 0) for (let i = 0; i < len; i++) cells.push([x + i, y]);
+    else if (t === 1) for (let i = 0; i < len; i++) cells.push([x, y + i]);
+    else cells.push([x, y], [x + 1, y], [x, y + 1], [x + 1, y + 1]);
+    cells.forEach(([a, b]) => { if (a > 0 && b > 0 && a < N - 1 && b < N - 1 && !safe(a, b)) wall.add(key(a, b)); });
+  }
+  const seen = flood(wall, START.x, START.y);     // seal pockets so every open cell is reachable
+  for (let y = 1; y < N - 1; y++) for (let x = 1; x < N - 1; x++) if (!seen.has(key(x, y))) wall.add(key(x, y));
+  return wall;
+}
+
+/* Keep the board solvable: at least one letter that continues a real word is always reachable. */
+function fillBoard() {
+  const p = S.word.join(''), valid = nextLetters(p);
+  const block = new Set(S.wall); S.snake.slice(1).forEach(s => block.add(key(s.x, s.y)));
+  const h = S.snake[0], dist = flood(block, h.x, h.y);
+  const taken = new Set(S.items.map(i => key(i.x, i.y)));
+  const open = min => [...dist].filter(([k, d]) => d >= min && !taken.has(k)).map(([k]) => k);
+  let spots = open(3); if (spots.length < 4) spots = open(1);
+  const place = ch => {
+    if (!spots.length) return;
+    const [x, y] = spots.splice(rnd(spots.length), 1)[0].split(',').map(Number);
+    S.items.push({x, y, ch, born: performance.now()});
+  };
+  const want = Math.min(valid.length, S.level < 3 ? 2 : 1);
+  const have = S.items.filter(i => valid.includes(i.ch) && dist.has(key(i.x, i.y)));
+  const pool = valid.filter(c => !have.some(i => i.ch === c));
+  let n = have.length;
+  while (n < want && pool.length) { place(pool.splice(rnd(pool.length), 1)[0]); n++; }
+  const target = Math.min(5 + S.level, 10);
+  let guard = 0;
+  while (S.items.length < target && spots.length && guard++ < 300) {
+    const c = pick(FREQ);
+    if (valid.includes(c) && Math.random() < 0.65) continue;     // mostly decoys
+    if (S.items.filter(i => i.ch === c).length >= 2) continue;
+    place(c);
+  }
+}
+
+/* ---------- Game state ---------- */
+let S = null;
+const interval = () => Math.max(70, 200 - (S.level - 1) * 15);
+
+function startLevel(level) {
+  S.level = level; S.wall = buildArena(level);
+  const w = pick(WORDS);
+  S.word = [w[0]]; S.snake = [{...START}, {x: START.x - 1, y: START.y}];
+  S.dir = [1, 0]; S.queue = []; S.items = []; S.flash = 0;
+  fillBoard(); hud();
+  S.mode = 'ready';
+  show(`<p>Level ${level}</p><div class="big">${w[0]}</div><p>Spell a ${L}-letter word starting with ${w[0]}</p>`, true);
+  const id = S.id;
+  setTimeout(() => { if (S.id === id && S.mode === 'ready') { S.mode = 'play'; hide(); } }, 1600);
+}
+function newGame() { S = {level: 0, score: 0, found: [], id: Math.random()}; startLevel(1); }
+
+function setDir(d) {
+  if (!S || (S.mode !== 'play' && S.mode !== 'ready')) return;
+  const last = S.queue.length ? S.queue[S.queue.length - 1] : S.dir;
+  if ((d[0] === -last[0] && d[1] === -last[1]) || (d[0] === last[0] && d[1] === last[1])) return;
+  if (S.queue.length < 3) S.queue.push(d);
+}
+
+function step() {
+  if (S.queue.length) S.dir = S.queue.shift();
+  const h = S.snake[0], nx = h.x + S.dir[0], ny = h.y + S.dir[1];
+  const idx = S.items.findIndex(i => i.x === nx && i.y === ny), grow = idx >= 0;
+  const body = grow ? S.snake : S.snake.slice(0, -1);
+  if (S.wall.has(key(nx, ny))) return over('wall');
+  if (body.some(s => s.x === nx && s.y === ny)) return over('self');
+  S.snake.unshift({x: nx, y: ny});
+  if (!grow) { S.snake.pop(); return; }
+  const it = S.items.splice(idx, 1)[0];
+  S.word.push(it.ch); S.score += 10;
+  const p = S.word.join('');
+  if (!PRE.has(p)) { hud(); return over('word', p); }
+  if (p.length === L) return complete(p);
+  fillBoard(); hud();
+}
+
+function complete(w) {
+  S.mode = 'won'; S.found.push(w); S.score += 100 * S.level; S.flash = performance.now();
+  hud(); saveBest();
+  show(`<span class="tag">${w}</span><p style="margin-top:8px">+${100 * S.level} bonus</p>`, false, true);
+  const id = S.id;
+  setTimeout(() => { if (S.id === id) startLevel(S.level + 1); }, 1500);
+}
+
+function over(why, p) {
+  S.mode = 'over'; saveBest(); hud();
+  const sofar = why === 'word' ? p.slice(0, -1) : S.word.join('');
+  const ex = pick(wordsFrom(sofar));
+  const head = {wall: 'Bonk! Into the wall.', self: 'You bit your own tail.', word: `No word starts with ${p}`}[why];
+  const tip = why === 'word' ? `From ${sofar} you could have made <b>${ex}</b>.` : `You were on ${sofar}. It could have been <b>${ex}</b>.`;
+  show(`<h2>${head}</h2><p>${tip}</p><div class="big">${S.score}</div><p>${S.found.length ? 'Words: ' + S.found.join(', ') : 'No words yet'} · Best ${best}</p><button class="go" data-act="new">Play again</button>`);
+}
+function saveBest() { if (S.score > best) { best = S.score; try { localStorage.setItem('wordsnake-best', best); } catch (e) {} } }
+
+function togglePause() {
+  if (!S) return;
+  if (S.mode === 'play') { S.mode = 'paused'; show(`<h2>Paused</h2><p>Spelling ${S.word.join('')}…</p><button class="go" data-act="resume">Resume</button>`); }
+  else if (S.mode === 'paused') { S.mode = 'play'; hide(); }
+}
+
+/* ---------- UI ---------- */
+function show(html, dim, clear) { card.innerHTML = html; ov.classList.remove('hide'); ov.classList.toggle('clear', !!clear); const b = card.querySelector('button'); if (b) b.focus({preventScroll: true}); }
+function hide() { ov.classList.add('hide'); }
+function hud() {
+  $('#lvl').textContent = S.level; $('#score').textContent = S.score; $('#best').textContent = Math.max(best, S.score);
+  let h = '';
+  for (let i = 0; i < L; i++) h += `<div class="slot ${i < S.word.length ? 'on' : i === S.word.length ? 'next' : ''}">${S.word[i] || ''}</div>`;
+  $('#slots').innerHTML = h;
+  $('#found').textContent = S.found.length ? 'Spelled: ' + S.found.join(' · ') : '';
+}
+$('#lenTag').textContent = `${L}-letter words`;
+
+ov.addEventListener('click', e => {
+  const a = e.target.closest('[data-act]'); if (!a) return;
+  if (a.dataset.act === 'new') newGame(); else if (a.dataset.act === 'resume') togglePause();
+});
+document.querySelectorAll('#pad [data-d]').forEach(b => b.addEventListener('pointerdown', e => { e.preventDefault(); setDir(b.dataset.d.split(',').map(Number)); }));
+$('#pauseBtn').addEventListener('click', togglePause);
+
+const KEYS = {ArrowUp:[0,-1], w:[0,-1], W:[0,-1], ArrowDown:[0,1], s:[0,1], S:[0,1], ArrowLeft:[-1,0], a:[-1,0], A:[-1,0], ArrowRight:[1,0], d:[1,0], D:[1,0]};
+addEventListener('keydown', e => {
+  if (KEYS[e.key]) { e.preventDefault(); setDir(KEYS[e.key]); }
+  else if (e.key === ' ' || e.key === 'p' || e.key === 'P') { e.preventDefault(); togglePause(); }
+  else if (e.key === 'Enter' && (S.mode === 'over' || S.mode === 'menu')) { e.preventDefault(); newGame(); }
+});
+
+let t0 = null;
+const board = $('#board');
+board.addEventListener('touchstart', e => { const t = e.touches[0]; t0 = [t.clientX, t.clientY]; }, {passive: true});
+board.addEventListener('touchmove', e => {
+  if (!t0) return; e.preventDefault();
+  const t = e.touches[0], dx = t.clientX - t0[0], dy = t.clientY - t0[1];
+  if (Math.max(Math.abs(dx), Math.abs(dy)) < 22) return;
+  setDir(Math.abs(dx) > Math.abs(dy) ? [Math.sign(dx), 0] : [0, Math.sign(dy)]);
+  t0 = [t.clientX, t.clientY];
+}, {passive: false});
+board.addEventListener('touchend', () => { t0 = null; });
+document.addEventListener('visibilitychange', () => { if (document.hidden && S && S.mode === 'play') togglePause(); });
+
+/* ---------- Rendering ---------- */
+let cell = 20;
+function fit() {
+  const w = board.clientWidth, hAvail = innerHeight - 380;
+  const size = Math.max(N * 14, Math.floor(Math.min(w, Math.max(hAvail, 240)) / N) * N);
+  const dpr = devicePixelRatio || 1;
+  cv.style.width = cv.style.height = size + 'px';
+  cv.width = cv.height = Math.round(size * dpr);
+  cell = cv.width / N;
+}
+const ro = new ResizeObserver(fit); ro.observe(board); addEventListener('resize', fit);
+
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); }
+function draw(now) {
+  const c = cell, W = cv.width, PX = '#263015', LCD = '#b4c368';
+  ctx.clearRect(0, 0, W, W);
+  ctx.fillStyle = 'rgba(38,48,21,.07)';
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) ctx.fillRect(x * c + c * .08, y * c + c * .08, c * .84, c * .84);
+  if (!S) return;
+  const inv = S.mode === 'won' && Math.floor((now - S.flash) / 160) % 2 === 0;
+  for (const k of S.wall) {
+    const [x, y] = k.split(',').map(Number);
+    ctx.fillStyle = PX; ctx.fillRect(x * c + c * .05, y * c + c * .05, c * .9, c * .9);
+    ctx.fillStyle = '#56632b'; ctx.fillRect(x * c + c * .3, y * c + c * .3, c * .4, c * .4);
+  }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const font = s => `700 ${Math.floor(c * s)}px "Pixelify Sans", monospace`;
+  for (const it of S.items) {
+    const a = Math.min(1, (now - it.born) / 220), s = c * (.5 + .4 * a), o = (c - s) / 2;
+    ctx.strokeStyle = PX; ctx.lineWidth = Math.max(1.5, c * .08);
+    rr(it.x * c + o, it.y * c + o, s, s, c * .18); ctx.stroke();
+    ctx.fillStyle = PX; ctx.font = font(.62 * a + .01); ctx.fillText(it.ch, it.x * c + c / 2, it.y * c + c * .54);
+  }
+  const n = S.word.length;
+  S.snake.forEach((s, i) => {
+    const x = s.x * c, y = s.y * c;
+    ctx.fillStyle = inv ? LCD : PX;
+    rr(x + c * .04, y + c * .04, c * .92, c * .92, i === 0 ? c * .38 : c * .2); ctx.fill();
+    if (inv) { ctx.strokeStyle = PX; ctx.lineWidth = c * .08; ctx.stroke(); }
+    if (i === 0) {
+      const [dx, dy] = S.dir, ex = x + c / 2 + dx * c * .18, ey = y + c / 2 + dy * c * .18;
+      ctx.fillStyle = inv ? PX : LCD;
+      for (const side of [-1, 1]) { ctx.beginPath(); ctx.arc(ex + dy * side * c * .2, ey + dx * side * c * .2, c * .1, 0, 7); ctx.fill(); }
+    } else {
+      const ch = S.word[n - i];
+      if (ch) { ctx.fillStyle = inv ? PX : LCD; ctx.font = font(.62); ctx.fillText(ch, x + c / 2, y + c * .54); }
+    }
+  });
+}
+
+let last = 0, acc = 0;
+function loop(t) {
+  requestAnimationFrame(loop);
+  const dt = Math.min(t - last, 250); last = t;
+  if (S && S.mode === 'play') {
+    acc += dt; const iv = interval();
+    while (acc >= iv && S.mode === 'play') { acc -= iv; step(); }
+  } else acc = 0;
+  draw(t);
+}
+
+/* ---------- Start screen ---------- */
+S = {level: 1, score: 0, found: [], id: 0, mode: 'menu'};
+S.wall = buildArena(1); S.word = [pick(WORDS)[0]]; S.snake = [{...START}, {x: START.x - 1, y: START.y}];
+S.dir = [1, 0]; S.queue = []; S.items = []; fillBoard(); hud();
+show(`<h2>Word Snake</h2><ul><li>Your tail starts with one letter.</li><li>Eat letters to spell a ${L}-letter word, in order.</li><li>Eat a letter that can't lead to a real word and you lose.</li><li>Each word gets you a faster snake and a new arena.</li></ul><button class="go" data-act="new">Play</button>`);
+fit(); requestAnimationFrame(loop);
+document.fonts && document.fonts.ready.then(fit);
+}
+</script>
+</body></html>

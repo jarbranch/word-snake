@@ -1,0 +1,5 @@
+# Godot cache and build output
+.godot/
+/android/
+*.apk
+*.aab
